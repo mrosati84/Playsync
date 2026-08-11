@@ -11,6 +11,7 @@ Fake_Mpv :: struct {
 	fd:       posix.FD,
 	received: [3]string,
 	fail_seek: bool,
+	enable_before_restart: bool,
 }
 
 fake_mpv_read_line :: proc(fd: posix.FD, buffer: []byte) -> (line: string, ok: bool) {
@@ -46,6 +47,14 @@ fake_mpv_loop :: proc(data: rawptr) {
 		)
 		_ = mpv_send_all(fake.fd, response)
 		delete(response)
+		if index == 1 && error_name == "success" {
+			poll_fd := posix.pollfd {
+				fd     = fake.fd,
+				events = {.IN},
+			}
+			fake.enable_before_restart = posix.poll(&poll_fd, 1, 50) > 0
+			_ = mpv_send_all(fake.fd, "{\"event\":\"playback-restart\"}\n")
+		}
 	}
 }
 
@@ -83,6 +92,7 @@ remote_seek_masks_and_restores_seek_events :: proc(t: ^testing.T) {
 	testing.expect(t, strings.contains(fake.received[0], `"disable_event","seek"`))
 	testing.expect(t, strings.contains(fake.received[1], `"seek",42.500000,"absolute+exact"`))
 	testing.expect(t, strings.contains(fake.received[2], `"enable_event","seek"`))
+	testing.expect(t, !fake.enable_before_restart)
 	for line in fake.received {
 		delete(line)
 	}

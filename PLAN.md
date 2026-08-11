@@ -59,10 +59,13 @@ playback continues locally and the event is logged; clients do not reconnect.
 6. Any connected client receives the event and sends the corresponding JSON IPC
    command to its local MPV instance.
 
-Remote seeks use a serialized, acknowledged transaction: disable delivery of
-the `seek` event for the IPC connection, apply an `absolute+exact` seek, then
-re-enable the event even when the seek fails. This prevents remote seeks from
-being reported as new local seeks and looping through the server.
+Remote seeks use a serialized transaction: disable delivery of the `seek`
+event for the IPC connection, apply an `absolute+exact` seek, wait for mpv's
+`playback-restart` completion event, then re-enable the `seek` event even when
+the operation fails. A successful command reply alone is not a completion
+barrier because mpv can deliver seek effects afterward. Keeping delivery
+disabled through completion prevents remote seeks from being reported as new
+local seeks and looping through the server.
 
 **Example cli command to run MPV**
 

@@ -71,10 +71,13 @@ triggering ID to relayed events. Server and client terminals log play, pause,
 and seek actions with that ID; the triggering client is marked with `(you)` in
 its own terminal.
 
-Remote seeks are applied using an acknowledged mpv IPC transaction: seek event
-delivery is disabled for this IPC connection, an exact absolute seek is sent,
-and event delivery is restored even if the seek fails. This prevents a remote
-seek from being mistaken for a new local seek and sent back indefinitely.
+Remote seeks are applied using an mpv IPC transaction: seek event delivery is
+disabled for this IPC connection, an exact absolute seek is sent, and the
+client waits for mpv's `playback-restart` completion event before restoring
+seek event delivery. A command reply can arrive before the seek effects, so it
+is not sufficient as the end of the suppression window. Event delivery is
+still restored if the operation fails. This prevents a remote seek from being
+mistaken for a new local seek and sent back indefinitely.
 
 ## Prototype limitations
 

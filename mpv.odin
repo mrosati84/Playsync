@@ -26,6 +26,8 @@ Mpv_Connection :: struct {
 	pending_id:      i64,
 	pending_done:    bool,
 	pending_result:  Mpv_Command_Result,
+	remote_seek_waiting:   bool,
+	remote_seek_completed: bool,
 	closed:          bool,
 
 	client: ^Client_State,
@@ -136,10 +138,35 @@ mpv_apply_remote_seek :: proc(mpv: ^Mpv_Connection, position: f64) -> bool {
 
 	seek_command := fmt.aprintf(`["seek",%.6f,"absolute+exact"]`, position)
 	defer delete(seek_command)
+	sync.mutex_lock(&mpv.response_mutex)
+	mpv.remote_seek_waiting = true
+	mpv.remote_seek_completed = false
+	sync.mutex_unlock(&mpv.response_mutex)
 	seek_result := mpv_command_locked(mpv, seek_command)
+
+	seek_completed := false
+	sync.mutex_lock(&mpv.response_mutex)
+	if seek_result.success {
+		deadline_remaining := MPV_COMMAND_TIMEOUT
+		for !mpv.remote_seek_completed && !mpv.closed {
+			start := time.now()
+			if !sync.cond_wait_with_timeout(&mpv.response_cond, &mpv.response_mutex, deadline_remaining) {
+				break
+			}
+			elapsed := time.since(start)
+			if elapsed >= deadline_remaining {
+				break
+			}
+			deadline_remaining -= elapsed
+		}
+		seek_completed = mpv.remote_seek_completed
+	}
+	mpv.remote_seek_waiting = false
+	sync.mutex_unlock(&mpv.response_mutex)
+
 	enable_result := mpv_command_locked(mpv, `["enable_event","seek"]`)
 	reenabled = enable_result.success
-	return seek_result.success && enable_result.success
+	return seek_result.success && seek_completed && enable_result.success
 }
 
 mpv_set_pause :: proc(mpv: ^Mpv_Connection, paused: bool) -> bool {
@@ -222,6 +249,14 @@ mpv_handle_line :: proc(mpv: ^Mpv_Connection, line: string) {
 	event_name, event_ok := event_value.(json.String)
 	if !event_ok {
 		return
+	}
+	if string(event_name) == "playback-restart" {
+		sync.mutex_lock(&mpv.response_mutex)
+		if mpv.remote_seek_waiting {
+			mpv.remote_seek_completed = true
+			sync.cond_broadcast(&mpv.response_cond)
+		}
+		sync.mutex_unlock(&mpv.response_mutex)
 	}
 	if mpv.client != nil {
 		client_on_mpv_event(mpv.client, string(event_name), object)
