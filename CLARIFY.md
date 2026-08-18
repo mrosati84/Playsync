@@ -4,11 +4,11 @@
 
 The client command has no movie argument. It is unclear whether the user:
 
-- passes a file to syncplay;
+- passes a file to playsync;
 - opens a file afterward through mpv;
 - or launches mpv separately.
 
-ANSWER: passes a file to syncplay
+ANSWER: passes a file to playsync
 
 2.  Session model
 
@@ -20,7 +20,7 @@ ANSWER: no rooms. one global viewing session. This program is intended to be run
 
 A newly connected client needs an initial state: current position, paused/playing status, and possibly media identity. A pure event dispatcher cannot provide that unless another client republishes its state.
 
-ANSWER: `syncplay` starts and has a movie specified. The initial state is paused and at 00:00:00.
+ANSWER: `playsync` starts and has a movie specified. The initial state is paused and at 00:00:00.
 
 4. Authoritative state
 
@@ -83,16 +83,16 @@ The plan does not define:
 - how long to wait for the IPC socket;
 - what happens if mpv fails to start;
 - how stale socket files are handled;
-- whether closing mpv terminates syncplay;
-- whether closing syncplay terminates mpv.
+- whether closing mpv terminates playsync;
+- whether closing playsync terminates mpv.
 
 ANSWERS:
 
 - how long to wait for the IPC socket: I don't understand the question. Use sensible defaults.
 - what happens if mpv fails to start: Quit and log the error.
 - how stale socket files are handled: Quit and log the error.
-- whether closing mpv terminates syncplay: Yes.
-- whether closing syncplay terminates mpv: Yes.
+- whether closing mpv terminates playsync: Yes.
+- whether closing playsync terminates mpv: Yes.
 
 9.  Platform scope
 
@@ -126,7 +126,7 @@ ANSWER: supported OS: MacOS and Linux (Linux server only). I said already IDC ab
 
 ## Internal inconsistencies or misleading details
 
-- The IPC socket path is supplied to mpv, but mpv creates/listens on it; syncplay does not create a shared read/write command stream. ANSWER IDK, pick defaults.
+- The IPC socket path is supplied to mpv, but mpv creates/listens on it; playsync does not create a shared read/write command stream. ANSWER IDK, pick defaults.
 - “Every interaction with MPV will write in the socket” is incorrect; explicit property observation and event handling are needed. ANSWER IDK, pick defaults.
 - The example contains --input-terminal=no twice. ANSWER: remove the duplicate option, it is a typo.
 - “The socket path and mpv path must likely be constants” conflicts with portability and safe concurrent use. ANSWER: we provide overrides via cli options.

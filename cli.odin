@@ -26,11 +26,11 @@ Options :: struct {
 }
 
 usage :: proc() {
-	fmt.println("syncplay - synchronize basic mpv playback events")
+	fmt.println("playsync - synchronize basic mpv playback events")
 	fmt.println("")
 	fmt.println("Usage:")
-	fmt.println("  syncplay server --port <port> [--host 0.0.0.0]")
-	fmt.println("  syncplay client --host <host> --port <port> [--mpv <path>] [--socket <path>] <movie>")
+	fmt.println("  playsync server --port <port> [--host 0.0.0.0]")
+	fmt.println("  playsync client --host <host> --port <port> [--mpv <path>] [--socket <path>] <movie>")
 }
 
 parse_cli :: proc(args: []string) -> (options: Options, error_message: string) {

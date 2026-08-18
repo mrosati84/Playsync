@@ -7,7 +7,7 @@ main :: proc() {
 	install_shutdown_handlers()
 	options, cli_error := parse_cli(os.args)
 	if cli_error != "" {
-		fmt.eprintln("syncplay:", cli_error)
+		fmt.eprintln("playsync:", cli_error)
 		usage()
 		os.exit(2)
 	}
@@ -23,7 +23,7 @@ main :: proc() {
 		}
 	case .Client:
 		if path_error := validate_client_paths(options); path_error != "" {
-			fmt.eprintln("syncplay:", path_error)
+			fmt.eprintln("playsync:", path_error)
 			os.exit(1)
 		}
 		if !run_client(options) {

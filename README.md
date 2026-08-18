@@ -1,6 +1,6 @@
-# syncplay
+# playsync
 
-`syncplay` is a small Odin program that relays play, pause, and seek actions
+`playsync` is a small Odin program that relays play, pause, and seek actions
 between a few trusted mpv users. One executable provides both the TCP relay
 server and the macOS client.
 
@@ -17,7 +17,7 @@ server and the macOS client.
 ```sh
 odin check .
 odin test .
-odin build . -out:syncplay
+odin build . -out:playsync
 ```
 
 ## Run
@@ -25,13 +25,13 @@ odin build . -out:syncplay
 Start one relay server:
 
 ```sh
-./syncplay server --host 0.0.0.0 --port 9000
+./playsync server --host 0.0.0.0 --port 9000
 ```
 
 Then each viewer starts a client with their local copy of the movie:
 
 ```sh
-./syncplay client \
+./playsync client \
   --host server.example.test \
   --port 9000 \
   /path/to/movie.mkv
@@ -40,7 +40,7 @@ Then each viewer starts a client with their local copy of the movie:
 The macOS defaults can be overridden:
 
 ```sh
-./syncplay client \
+./playsync client \
   --host server.example.test \
   --port 9000 \
   --mpv /custom/path/to/mpv \
