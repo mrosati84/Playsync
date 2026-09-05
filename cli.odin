@@ -6,8 +6,14 @@ import "core:strconv"
 import "core:strings"
 
 DEFAULT_SERVER_HOST :: "0.0.0.0"
-DEFAULT_MPV_PATH    :: "/Applications/mpv.app/Contents/MacOS/mpv"
 DEFAULT_SOCKET_PATH :: "/tmp/mpv-socket"
+
+when ODIN_OS == .Darwin {
+	DEFAULT_MPV_PATH :: "/Applications/mpv.app/Contents/MacOS/mpv"
+} else {
+	// Linux ships mpv as a plain command; resolve it through PATH.
+	DEFAULT_MPV_PATH :: "mpv"
+}
 
 Command_Kind :: enum {
 	None,
@@ -108,13 +114,45 @@ parse_cli :: proc(args: []string) -> (options: Options, error_message: string) {
 	return options, ""
 }
 
-validate_client_paths :: proc(options: Options) -> (error_message: string) {
+// resolve_executable locates an executable and returns a freshly allocated path
+// the caller owns. A value that contains a slash is checked as-is; a bare command
+// name is looked up in PATH, matching how os.process_start locates the program.
+resolve_executable :: proc(name: string, allocator := context.allocator) -> (resolved: string, ok: bool) {
+	if name == "" {
+		return "", false
+	}
+	if strings.index_byte(name, '/') >= 0 {
+		if os.is_file(name) {
+			return strings.clone(name, allocator), true
+		}
+		return "", false
+	}
+
+	path_env := os.get_env("PATH", context.temp_allocator)
+	for dir in strings.split_iterator(&path_env, ":") {
+		if dir == "" {
+			continue
+		}
+		candidate := fmt.tprintf("%s/%s", dir, name)
+		if os.is_file(candidate) {
+			return strings.clone(candidate, allocator), true
+		}
+	}
+	return "", false
+}
+
+validate_client_paths :: proc(options: ^Options) -> (error_message: string) {
 	if _, err := os.stat(options.movie_path, context.temp_allocator); err != nil {
 		return fmt.tprintf("movie does not exist: %s", options.movie_path)
 	}
-	if _, err := os.stat(options.mpv_path, context.temp_allocator); err != nil {
-		return fmt.tprintf("mpv does not exist: %s", options.mpv_path)
+	resolved_mpv, mpv_ok := resolve_executable(options.mpv_path)
+	if !mpv_ok {
+		if strings.index_byte(options.mpv_path, '/') >= 0 {
+			return fmt.tprintf("mpv does not exist: %s", options.mpv_path)
+		}
+		return fmt.tprintf("mpv not found on PATH: %s", options.mpv_path)
 	}
+	options.mpv_path = resolved_mpv
 	if _, err := os.stat(options.socket_path, context.temp_allocator); err == nil {
 		return fmt.tprintf("socket path already exists: %s", options.socket_path)
 	}

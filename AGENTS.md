@@ -15,7 +15,7 @@ odin build . -out:playsync   # Build the server/client executable
 ./playsync server --host 0.0.0.0 --port 9000
 ```
 
-Client mode requires macOS and mpv; server mode supports macOS and Linux. See `README.md` for client launch examples and optional mpv/socket paths.
+Client and server modes both support macOS and Linux, and the client needs mpv (the `mpv.app` bundle on macOS, `mpv` from `PATH` on Linux). See `README.md` for client launch examples and optional mpv/socket paths.
 
 ## Coding Style & Naming Conventions
 
