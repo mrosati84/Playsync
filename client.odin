@@ -326,8 +326,8 @@ wait_for_mpv_socket :: proc(process: os.Process, path: string) -> (posix_fd: int
 }
 
 run_client :: proc(options: Options) -> bool {
-	when ODIN_OS != .Darwin {
-		fmt.eprintln("client: client mode is supported only on macOS")
+	when ODIN_OS != .Darwin && ODIN_OS != .Linux {
+		fmt.eprintln("client: client mode is supported only on macOS and Linux")
 		return false
 	}
 

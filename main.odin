@@ -22,7 +22,7 @@ main :: proc() {
 			os.exit(1)
 		}
 	case .Client:
-		if path_error := validate_client_paths(options); path_error != "" {
+		if path_error := validate_client_paths(&options); path_error != "" {
 			fmt.eprintln("playsync:", path_error)
 			os.exit(1)
 		}

@@ -2,12 +2,12 @@
 
 `playsync` is a small Odin program that relays play, pause, and seek actions
 between a few trusted mpv users. One executable provides both the TCP relay
-server and the macOS client.
+server and the macOS or Linux client.
 
 ## Requirements
 
 - Odin 2026-07 or newer
-- macOS for client mode
+- macOS or Linux for client mode
 - macOS or Linux for server mode
 - mpv installed on every client
 - The same media file (including the same cut) on every client
@@ -37,7 +37,9 @@ Then each viewer starts a client with their local copy of the movie:
   /path/to/movie.mkv
 ```
 
-The macOS defaults can be overridden:
+The client resolves mpv from a per-platform default: the `mpv.app` bundle on
+macOS, and `mpv` from `PATH` on Linux. Both defaults, and the IPC socket path,
+can be overridden:
 
 ```sh
 ./playsync client \
@@ -47,6 +49,9 @@ The macOS defaults can be overridden:
   --socket /tmp/custom-mpv-socket \
   /path/to/movie.mkv
 ```
+
+A sandboxed mpv (Flatpak or Snap) is not a plain executable path; wrap it in a
+small launcher script and pass that script to `--mpv`.
 
 The client starts at `00:00:00` in the paused state. Closing mpv closes the
 client. Interrupting the client terminates the mpv process it launched. If the
